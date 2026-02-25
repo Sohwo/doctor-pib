@@ -5,7 +5,7 @@
 ║   Ejecutar: python app.py            ║
 ╚══════════════════════════════════════╝
 """
-
+import os
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import google.generativeai as genai
@@ -19,7 +19,7 @@ from sources import (
 # ─────────────────────────────────────
 #  🔑 PON TU API KEY DE GEMINI AQUÍ
 # ─────────────────────────────────────
-GEMINI_API_KEY = "PEGA_TU_API_KEY_AQUI"
+GEMINI_API_KEY = "AIzaSyC8ArckOdKZ66Eyv3VGj7hKkumHiv-yZpc"
 # ─────────────────────────────────────
 
 app = Flask(__name__, static_folder="static")
@@ -320,4 +320,6 @@ if __name__ == "__main__":
     print(f"  📚 Fuentes indexadas: {len(set(s.get('source_name','') for s in sources))}")
     print(f"\n  🌐 Abre: http://localhost:5000")
     print("═"*52 + "\n")
-    app.run(debug=True, port=5000)
+    if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
