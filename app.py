@@ -15,11 +15,13 @@ from sources import (
     ingest_pdf, ingest_url, ingest_text, ingest_image,
     search_sources, format_context
 )
+from dotenv import load_dotenv
+load_dotenv()
 
 # ─────────────────────────────────────
 #  🔑 PON TU API KEY DE GEMINI AQUÍ
 # ─────────────────────────────────────
-GEMINI_API_KEY = "AIzaSyC8ArckOdKZ66Eyv3VGj7hKkumHiv-yZpc"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 # ─────────────────────────────────────
 
 app = Flask(__name__, static_folder="static")
@@ -312,10 +314,15 @@ if __name__ == "__main__":
     print("\n" + "═"*52)
     print("  🎓 DOCTOR PIB v2.0 — Con RAG y fuentes")
     print("═"*52)
-    if GEMINI_API_KEY == "PEGA_TU_API_KEY_AQUI":
-        print("\n  ⚠️  Falta tu API Key en la línea 22 de app.py")
-    else:
-        print("\n  ✅ API Key lista")
+    key_preview = GEMINI_API_KEY[:12] + "..." if GEMINI_API_KEY else "VACÍA"
+    print(f"\n  🔑 API Key cargada: {key_preview}")
+    sources = load_sources()
+    print(f"  📚 Fuentes indexadas: {len(set(s.get('source_name','') for s in sources))}")
+    print(f"\n  🌐 Abre: http://localhost:5000")
+    print("═"*52 + "\n")
+    port = int(os.environ.get("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
+        
     sources = load_sources()
     print(f"  📚 Fuentes indexadas: {len(set(s.get('source_name','') for s in sources))}")
     print(f"\n  🌐 Abre: http://localhost:5000")
