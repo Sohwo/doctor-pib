@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doctor PIB v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#0d1b2a; --navy-mid:#1a2d42; --navy-light:#243447;
+  --gold:#c9a84c; --gold-light:#e8c97a; --cream:#f9f4e8;
+  --text-light:#8899aa; --green:#2dd4a0; --red:#e85d75;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);min-height:100vh;display:flex;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:290px;min-width:290px;background:var(--navy-mid);border-right:1px solid rgba(201,168,76,0.15);display:flex;flex-direction:column;height:100vh;}
+.sidebar-header{padding:22px 18px 14px;border-bottom:1px solid rgba(201,168,76,0.1);}
+.logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:19px;font-weight:900;display:flex;align-items:center;gap:9px;}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.logo-sub{font-size:9px;color:var(--text-light);letter-spacing:1.5px;text-transform:uppercase;}
+.new-btn{margin:12px 18px 0;padding:8px 12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--navy);border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:12px;cursor:pointer;width:calc(100% - 36px);transition:all 0.2s;}
+.new-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(201,168,76,0.4);}
+.sec-label{padding:16px 18px 5px;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--text-light);font-weight:600;}
+.history-list{flex:1;overflow-y:auto;padding:3px 8px;}
+.history-list::-webkit-scrollbar{width:3px;}
+.history-list::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.2);border-radius:3px;}
+.h-item{padding:8px 11px;border-radius:7px;cursor:pointer;color:var(--text-light);font-size:12px;transition:all 0.15s;display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;}
+.h-item:hover{background:rgba(255,255,255,0.05);color:var(--cream);}
+.h-item.active{background:rgba(201,168,76,0.1);color:var(--gold-light);}
+
+/* SOURCES PANEL */
+.sources-panel{border-top:1px solid rgba(201,168,76,0.1);padding:12px 18px;max-height:220px;overflow-y:auto;}
+.sources-panel::-webkit-scrollbar{width:3px;}
+.sources-panel::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.2);border-radius:3px;}
+.source-item{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:rgba(255,255,255,0.03);border-radius:6px;margin-bottom:4px;font-size:11px;}
+.source-name{color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.source-meta{color:var(--text-light);font-size:10px;margin-left:6px;flex-shrink:0;}
+.del-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0 2px;opacity:0.6;transition:opacity 0.2s;}
+.del-btn:hover{opacity:1;}
+.add-source-btns{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.src-btn{flex:1;min-width:56px;padding:6px 4px;border-radius:7px;border:1px solid rgba(201,168,76,0.25);background:transparent;color:var(--text-light);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;text-align:center;}
+.src-btn:hover{background:rgba(201,168,76,0.12);color:var(--gold-light);border-color:var(--gold);}
+
+/* SIDEBAR FOOTER */
+.sidebar-footer{padding:12px 18px;border-top:1px solid rgba(201,168,76,0.1);}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px;}
+.mode-btn{padding:6px 8px;border-radius:7px;border:1px solid rgba(201,168,76,0.2);background:transparent;color:var(--text-light);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;text-align:center;}
+.mode-btn:hover,.mode-btn.active{background:rgba(201,168,76,0.15);color:var(--gold-light);border-color:var(--gold);}
+.status-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-light);}
+.s-dot{width:7px;height:7px;border-radius:50%;animation:pdot 2s infinite;flex-shrink:0;}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.topbar{padding:13px 26px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(201,168,76,0.08);flex-shrink:0;}
+.topbar-title{font-family:'Playfair Display',serif;color:var(--cream);font-size:16px;font-weight:700;}
+.topbar-sub{font-size:10px;color:var(--text-light);}
+.mode-badge{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);color:var(--gold-light);padding:4px 12px;border-radius:18px;font-size:11px;font-weight:600;}
+
+/* CHAT */
+.chat-area{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:22px;scroll-behavior:smooth;}
+.chat-area::-webkit-scrollbar{width:4px;}
+.chat-area::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.15);border-radius:4px;}
+
+/* WELCOME */
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:24px;padding:20px;animation:fup 0.5s ease;}
+@keyframes fup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.char-wrap{position:relative;width:140px;height:140px;}
+.char-glow{position:absolute;inset:-16px;background:radial-gradient(circle,rgba(201,168,76,0.2) 0%,transparent 70%);animation:gp 3s ease-in-out infinite;border-radius:50%;}
+@keyframes gp{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.char-svg{width:140px;height:140px;animation:fl 4s ease-in-out infinite;}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.head-g{animation:ht 6s ease-in-out infinite;transform-origin:80px 120px;}
+@keyframes ht{0%,100%{transform:rotate(0deg)}30%{transform:rotate(2deg)}70%{transform:rotate(-2deg)}}
+.eye-lid{animation:bl 5s ease-in-out infinite;transform-origin:center top;}
+@keyframes bl{0%,88%,100%{transform:scaleY(0)}93%{transform:scaleY(1)}}
+.star-sp{animation:sp 2.5s ease-in-out infinite;}
+.star-sp:nth-child(2){animation-delay:0.9s}.star-sp:nth-child(3){animation-delay:1.7s}
+@keyframes sp{0%,100%{opacity:0;transform:scale(0.4)}50%{opacity:1;transform:scale(1.2)}}
+.cap-g{animation:cb 4s ease-in-out infinite;}
+@keyframes cb{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.book-p{animation:pg 2.5s ease-in-out infinite;transform-origin:left center;}
+@keyframes pg{0%,100%{transform:scaleX(1)}50%{transform:scaleX(0.2)}}
+.char-name{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:var(--gold);text-align:center;}
+.char-title{font-size:11px;color:var(--text-light);text-align:center;letter-spacing:2px;text-transform:uppercase;}
+.welcome-h{font-family:'Playfair Display',serif;color:var(--cream);font-size:22px;font-weight:700;text-align:center;margin-bottom:8px;}
+.welcome-p{color:var(--text-light);font-size:13.5px;line-height:1.7;text-align:center;max-width:500px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:580px;}
+.chip{padding:8px 15px;background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.2);border-radius:20px;color:var(--cream);font-size:12px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;}
+.chip:hover{background:rgba(201,168,76,0.1);border-color:var(--gold);transform:translateY(-2px);}
+
+/* MESSAGES */
+.message{display:flex;gap:12px;animation:mi 0.3s ease;max-width:800px;width:100%;align-self:flex-start;}
+.message.user{flex-direction:row-reverse;align-self:flex-end;}
+@keyframes mi{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.msg-avatar{width:36px;height:36px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.msg-avatar.bot{background:var(--navy-light);border:1px solid rgba(201,168,76,0.25);}
+.msg-avatar.user{background:linear-gradient(135deg,var(--gold),var(--gold-light));font-size:16px;}
+.mini-svg{width:28px;height:28px;animation:mf 3s ease-in-out infinite;}
+@keyframes mf{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.msg-content{display:flex;flex-direction:column;gap:3px;flex:1;}
+.msg-bubble{padding:12px 16px;border-radius:14px;font-size:13.5px;line-height:1.75;}
+.message.bot .msg-bubble{background:var(--navy-light);border:1px solid rgba(201,168,76,0.1);color:var(--cream);border-radius:3px 14px 14px 14px;}
+.message.user .msg-bubble{background:rgba(201,168,76,0.11);border:1px solid rgba(201,168,76,0.2);color:var(--cream);border-radius:14px 3px 14px 14px;}
+.msg-meta{font-size:10px;color:var(--text-light);display:flex;gap:7px;align-items:center;padding:0 2px;}
+.mpill{padding:2px 7px;border-radius:9px;font-size:9px;font-weight:600;}
+.mode-p{background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold-light);}
+.src-p{background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.2);color:var(--green);}
+.typing-dots{display:flex;gap:5px;padding:8px 4px;}
+.tdot{width:6px;height:6px;background:var(--gold);border-radius:50%;animation:td 1.2s infinite;}
+.tdot:nth-child(2){animation-delay:0.2s}.tdot:nth-child(3){animation-delay:0.4s}
+@keyframes td{0%,80%,100%{transform:translateY(0);opacity:0.5}40%{transform:translateY(-6px);opacity:1}}
+
+/* INPUT */
+.input-area{padding:16px 26px 22px;border-top:1px solid rgba(201,168,76,0.08);flex-shrink:0;}
+.input-wrap{display:flex;gap:9px;align-items:flex-end;background:var(--navy-light);border:1px solid rgba(201,168,76,0.2);border-radius:13px;padding:9px 12px;transition:all 0.2s;max-width:800px;margin:0 auto;}
+.input-wrap:focus-within{border-color:rgba(201,168,76,0.45);box-shadow:0 0 0 3px rgba(201,168,76,0.06);}
+.chat-input{flex:1;background:transparent;border:none;outline:none;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13.5px;line-height:1.6;resize:none;max-height:120px;min-height:22px;}
+.chat-input::placeholder{color:var(--text-light);}
+.send-btn{width:34px;height:34px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--navy);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all 0.2s;flex-shrink:0;}
+.send-btn:hover{transform:scale(1.08);box-shadow:0 4px 16px rgba(201,168,76,0.4);}
+.input-hint{text-align:center;font-size:10px;color:var(--text-light);margin-top:8px;max-width:800px;margin-left:auto;margin-right:auto;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px);}
+.modal{background:var(--navy-mid);border:1px solid rgba(201,168,76,0.25);border-radius:18px;padding:30px;width:440px;max-width:90vw;max-height:90vh;overflow-y:auto;}
+.modal h3{font-family:'Playfair Display',serif;color:var(--gold);font-size:20px;margin-bottom:6px;}
+.modal p{color:var(--text-light);font-size:12.5px;line-height:1.6;margin-bottom:20px;}
+.modal-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+.mtab{padding:7px 14px;border-radius:8px;border:1px solid rgba(201,168,76,0.2);background:transparent;color:var(--text-light);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.mtab:hover,.mtab.active{background:rgba(201,168,76,0.15);color:var(--gold-light);border-color:var(--gold);}
+.tab-content{display:none;}.tab-content.active{display:block;}
+.modal-field{margin-bottom:14px;}
+.modal-field label{display:block;font-size:11px;color:var(--text-light);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px;}
+.modal-field input,.modal-field textarea{width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:9px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;}
+.modal-field input:focus,.modal-field textarea:focus{border-color:var(--gold);}
+.modal-field textarea{resize:vertical;min-height:100px;}
+.modal-btns{display:flex;gap:9px;margin-top:18px;}
+.mbtn-p{flex:1;padding:11px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--navy);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s;}
+.mbtn-p:hover{box-shadow:0 4px 16px rgba(201,168,76,0.4);}
+.mbtn-s{padding:11px 16px;background:transparent;color:var(--text-light);border:1px solid rgba(255,255,255,0.1);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;}
+.drop-area{border:2px dashed rgba(201,168,76,0.3);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;color:var(--text-light);font-size:13px;}
+.drop-area:hover{border-color:var(--gold);background:rgba(201,168,76,0.05);}
+.drop-area input{display:none;}
+code{background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace;font-size:12px;color:#e8c97a;}
+strong{color:#f5e9c4;}
+.formula{color:#2dd4a0;font-family:'DM Mono',monospace;font-size:12.5px;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">📊</div>
+      <div>
+        <div>Doctor PIB</div>
+        <div class="logo-sub">RAG · Macroeconomía · IA</div>
+      </div>
+    </div>
+    <button class="new-btn" onclick="newChat()">✦ Nueva conversación</button>
+  </div>
+
+  <div class="sec-label">Historial</div>
+  <div class="history-list" id="historyList">
+    <div style="padding:14px 10px;font-size:11px;color:var(--text-light);opacity:0.6;text-align:center;">Tus conversaciones aparecerán aquí</div>
+  </div>
+
+  <!-- FUENTES -->
+  <div class="sec-label">📚 Fuentes indexadas <span id="srcCount" style="color:var(--gold);">(0)</span></div>
+  <div class="sources-panel">
+    <div id="sourcesList" style="font-size:11px;color:var(--text-light);opacity:0.6;">Sin fuentes aún</div>
+    <div class="add-source-btns">
+      <button class="src-btn" onclick="openModal('pdf')">📄 PDF</button>
+      <button class="src-btn" onclick="openModal('url')">🌐 URL</button>
+      <button class="src-btn" onclick="openModal('text')">📝 Texto</button>
+      <button class="src-btn" onclick="openModal('image')">🖼️ Imagen</button>
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sec-label" style="padding:0 0 7px 0;">Modo de estudio</div>
+    <div class="mode-grid">
+      <button class="mode-btn active" onclick="setMode('explicacion',this)">📖 Explicar</button>
+      <button class="mode-btn" onclick="setMode('socratico',this)">🔍 Socrático</button>
+      <button class="mode-btn" onclick="setMode('simulador',this)">📐 Simular</button>
+      <button class="mode-btn" onclick="setMode('debate',this)">⚖️ Debate</button>
+      <button class="mode-btn" onclick="setMode('quiz',this)">🎯 Quiz</button>
+      <button class="mode-btn" onclick="setMode('detector',this)">🔬 Detector</button>
+    </div>
+    <div class="status-row" style="margin-top:10px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="s-dot" id="sDot" style="background:var(--red);"></div>
+        <span id="sTxt" style="font-size:11px;">Verificando...</span>
+      </div>
+      <span style="font-size:10px;color:var(--gold);">Gemini 🆓</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Doctor PIB 🎓</div>
+      <div class="topbar-sub">Asistente RAG · Macroeconomía · tus fuentes</div>
+    </div>
+    <div class="mode-badge" id="modeBadge">📖 Explicación</div>
+  </div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="welcome" id="ws">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <div class="char-wrap">
+          <div class="char-glow"></div>
+          <svg class="char-svg" viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg">
+            <polygon class="star-sp" points="20,28 22,34 28,34 23,38 25,44 20,40 15,44 17,38 12,34 18,34" fill="#c9a84c" opacity="0"/>
+            <polygon class="star-sp" points="136,22 138,28 144,28 139,32 141,38 136,34 131,38 133,32 128,28 134,28" fill="#c9a84c" opacity="0"/>
+            <polygon class="star-sp" points="8,78 10,84 16,84 11,88 13,94 8,90 3,94 5,88 0,84 6,84" fill="#e8c97a" opacity="0"/>
+            <rect x="38" y="122" width="84" height="72" rx="12" fill="#1a2d42"/>
+            <polygon points="65,122 80,134 95,122 88,117 80,122 72,117" fill="#f9f4e8"/>
+            <polygon points="80,124 74,137 80,147 86,137" fill="#c9a84c"/>
+            <polygon points="80,147 76,157 80,172 84,157" fill="#9a7020"/>
+            <polygon points="38,122 65,122 60,143 38,147" fill="#243447"/>
+            <polygon points="122,122 95,122 100,143 122,147" fill="#243447"/>
+            <rect x="44" y="130" width="13" height="9" rx="2" fill="#c9a84c" opacity="0.7"/>
+            <rect x="14" y="124" width="28" height="52" rx="10" fill="#1a2d42"/>
+            <rect x="118" y="124" width="28" height="52" rx="10" fill="#1a2d42"/>
+            <ellipse cx="28" cy="178" rx="13" ry="9" fill="#e2b896"/>
+            <ellipse cx="132" cy="178" rx="13" ry="9" fill="#e2b896"/>
+            <rect x="16" y="156" width="24" height="18" rx="3" fill="#c9a84c"/>
+            <rect class="book-p" x="28" y="157" width="11" height="16" rx="2" fill="#f9f4e8"/>
+            <rect x="69" y="107" width="22" height="18" rx="6" fill="#e2b896"/>
+            <g class="head-g">
+              <ellipse cx="80" cy="76" rx="41" ry="44" fill="#e2b896"/>
+              <ellipse cx="39" cy="76" rx="8" ry="11" fill="#e2b896"/>
+              <ellipse cx="121" cy="76" rx="8" ry="11" fill="#e2b896"/>
+              <ellipse cx="39" cy="76" rx="5" ry="7" fill="#c89070"/>
+              <ellipse cx="121" cy="76" rx="5" ry="7" fill="#c89070"/>
+              <ellipse cx="80" cy="36" rx="37" ry="15" fill="#2d1f0e"/>
+              <path d="M43,42 Q41,56 39,63" stroke="#2d1f0e" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <path d="M117,42 Q119,56 121,63" stroke="#2d1f0e" stroke-width="6" fill="none" stroke-linecap="round"/>
+              <ellipse cx="46" cy="50" rx="6" ry="9" fill="#888" opacity="0.45"/>
+              <ellipse cx="114" cy="50" rx="6" ry="9" fill="#888" opacity="0.45"/>
+              <g class="cap-g">
+                <ellipse cx="80" cy="33" rx="43" ry="8" fill="#0d1b2a"/>
+                <rect x="68" y="12" width="24" height="21" rx="2" fill="#0d1b2a"/>
+                <rect x="60" y="10" width="40" height="8" rx="2" fill="#1a2d42"/>
+                <line x1="100" y1="11" x2="112" y2="28" stroke="#c9a84c" stroke-width="2.5"/>
+                <circle cx="112" cy="30" r="3" fill="#c9a84c"/>
+                <line x1="112" y1="33" x2="109" y2="42" stroke="#c9a84c" stroke-width="1.5"/>
+                <line x1="112" y1="33" x2="115" y2="42" stroke="#c9a84c" stroke-width="1.5"/>
+              </g>
+              <path d="M56 63 Q65 58 72 61" stroke="#2d1f0e" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+              <path d="M88 61 Q95 58 104 63" stroke="#2d1f0e" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+              <rect x="53" y="65" width="23" height="17" rx="8" fill="none" stroke="#2d1f0e" stroke-width="2.8"/>
+              <rect x="84" y="65" width="23" height="17" rx="8" fill="none" stroke="#2d1f0e" stroke-width="2.8"/>
+              <line x1="76" y1="73" x2="84" y2="73" stroke="#2d1f0e" stroke-width="2.2"/>
+              <line x1="37" y1="71" x2="53" y2="71" stroke="#2d1f0e" stroke-width="2.2"/>
+              <line x1="107" y1="71" x2="123" y2="71" stroke="#2d1f0e" stroke-width="2.2"/>
+              <rect x="55" y="67" width="19" height="13" rx="7" fill="#4a90d9" opacity="0.07"/>
+              <rect x="86" y="67" width="19" height="13" rx="7" fill="#4a90d9" opacity="0.07"/>
+              <circle cx="65" cy="73" r="5" fill="#3d2b1a"/><circle cx="65" cy="73" r="2.5" fill="#1a0f00"/>
+              <circle cx="95" cy="73" r="5" fill="#3d2b1a"/><circle cx="95" cy="73" r="2.5" fill="#1a0f00"/>
+              <circle cx="66" cy="71" r="1.2" fill="white"/><circle cx="96" cy="71" r="1.2" fill="white"/>
+              <rect class="eye-lid" x="59.5" y="67.5" width="11" height="11" rx="5.5" fill="#e2b896"/>
+              <rect class="eye-lid" x="89.5" y="67.5" width="11" height="11" rx="5.5" fill="#e2b896"/>
+              <ellipse cx="80" cy="88" rx="4.5" ry="4" fill="#c89070"/>
+              <path d="M77,88 Q80,93 83,88" stroke="#b07050" stroke-width="1.5" fill="none"/>
+              <path d="M68,100 Q74,96 80,98 Q86,96 92,100" stroke="#2d1f0e" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+              <path d="M70 110 Q80 119 90 110" stroke="#8b4513" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+              <ellipse cx="52" cy="91" rx="9" ry="6" fill="#ffaaaa" opacity="0.28"/>
+              <ellipse cx="108" cy="91" rx="9" ry="6" fill="#ffaaaa" opacity="0.28"/>
+            </g>
+          </svg>
+        </div>
+        <div class="char-name">Dr. PIB</div>
+        <div class="char-title">Tu cuate doctor en macroeconomía</div>
+      </div>
+      <div>
+        <div class="welcome-h">¡Órale, aquí estoy! 🎓</div>
+        <div class="welcome-p">Soy el Doctor PIB — tu cuate que estudió demasiado economía. Sube tus libros, apuntes o URLs y te explico con tus propias fuentes. <strong style="color:var(--gold-light);">O pregúntame directo, que de eso no me rajo.</strong></div>
+      </div>
+      <div class="chips">
+        <div class="chip" onclick="sendSug('¿Qué es el modelo IS-LM?')">📈 IS-LM</div>
+        <div class="chip" onclick="sendSug('Explícame el multiplicador keynesiano con fórmulas')">✖️ Multiplicador</div>
+        <div class="chip" onclick="sendSug('Modo quiz: 3 preguntas de macroeconomía básica')">🎯 Quiz</div>
+        <div class="chip" onclick="sendSug('Simula: c=0.8, t=0.25, G sube 100. ¿Cuánto sube el PIB?')">🔢 Simulación</div>
+        <div class="chip" onclick="sendSug('¿Keynesianos vs Monetaristas en política fiscal?')">⚖️ Debate</div>
+        <div class="chip" onclick="openModal('pdf')">📄 Subir mi PDF</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea class="chat-input" id="chatInput" placeholder="Pregúntale al Dr. PIB..." rows="1" onkeydown="hKey(event)" oninput="aResize(this)"></textarea>
+      <button class="send-btn" onclick="sendMsg()">➤</button>
+    </div>
+    <div class="input-hint">Enter envía · Shift+Enter nueva línea · <span id="mHint">📖 Modo Explicación</span></div>
+  </div>
+</div>
+
+<!-- MODAL FUENTES -->
+<div class="modal-overlay" id="srcModal" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3>📚 Agregar fuente</h3>
+    <p>Sube PDFs, URLs, texto o imágenes. El Dr. PIB las usará para responder con tus propias fuentes.</p>
+
+    <div class="modal-tabs">
+      <button class="mtab active" onclick="switchTab('pdf',this)">📄 PDF</button>
+      <button class="mtab" onclick="switchTab('url',this)">🌐 URL</button>
+      <button class="mtab" onclick="switchTab('text',this)">📝 Texto</button>
+      <button class="mtab" onclick="switchTab('image',this)">🖼️ Imagen</button>
+    </div>
+
+    <!-- PDF TAB -->
+    <div class="tab-content active" id="tab-pdf">
+      <div class="drop-area" onclick="document.getElementById('pdfFile').click()">
+        <input type="file" id="pdfFile" accept=".pdf" onchange="uploadPDF(event)">
+        <div style="font-size:28px;margin-bottom:8px;">📄</div>
+        <div>Clic aquí para seleccionar tu PDF</div>
+        <div style="font-size:11px;margin-top:4px;color:var(--text-light);">Libros, artículos, apuntes — lo que tengas</div>
+      </div>
+      <div id="pdfStatus" style="margin-top:10px;font-size:12px;color:var(--text-light);"></div>
+    </div>
+
+    <!-- URL TAB -->
+    <div class="tab-content" id="tab-url">
+      <div class="modal-field">
+        <label>URL de la página web</label>
+        <input type="text" id="urlInput" placeholder="https://ejemplo.com/articulo-macro"/>
+      </div>
+      <div class="modal-btns">
+        <button class="mbtn-s" onclick="closeModal()">Cancelar</button>
+        <button class="mbtn-p" onclick="addURL()">🌐 Indexar URL</button>
+      </div>
+      <div id="urlStatus" style="margin-top:10px;font-size:12px;color:var(--text-light);"></div>
+    </div>
+
+    <!-- TEXT TAB -->
+    <div class="tab-content" id="tab-text">
+      <div class="modal-field">
+        <label>Nombre / etiqueta de este texto</label>
+        <input type="text" id="textLabel" placeholder="Ej: Apuntes de clase, Cap. 5 Blanchard..."/>
+      </div>
+      <div class="modal-field">
+        <label>Pega tu texto aquí</label>
+        <textarea id="textContent" placeholder="Pega aquí fragmentos de libros, apuntes, resúmenes..."></textarea>
+      </div>
+      <div class="modal-btns">
+        <button class="mbtn-s" onclick="closeModal()">Cancelar</button>
+        <button class="mbtn-p" onclick="addText()">📝 Indexar texto</button>
+      </div>
+      <div id="textStatus" style="margin-top:10px;font-size:12px;color:var(--text-light);"></div>
+    </div>
+
+    <!-- IMAGE TAB -->
+    <div class="tab-content" id="tab-image">
+      <div class="drop-area" onclick="document.getElementById('imgFile').click()">
+        <input type="file" id="imgFile" accept=".jpg,.jpeg,.png,.webp" onchange="uploadImage(event)">
+        <div style="font-size:28px;margin-bottom:8px;">🖼️</div>
+        <div>Clic para seleccionar imagen escaneada</div>
+        <div style="font-size:11px;margin-top:4px;color:var(--text-light);">JPG, PNG, WEBP — páginas escaneadas de libros</div>
+      </div>
+      <div id="imgStatus" style="margin-top:10px;font-size:12px;color:var(--text-light);"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let conversations = JSON.parse(localStorage.getItem('drpib_c') || '[]');
+let currentId = null;
+let currentMode = 'explicacion';
+const MODES = {
+  explicacion:'📖 Explicación', socratico:'🔍 Socrático',
+  simulador:'📐 Simulador', debate:'⚖️ Debate',
+  quiz:'🎯 Quiz', detector:'🔬 Detector'
+};
+
+window.onload = () => { checkStatus(); renderHistory(); loadSources(); };
+
+async function checkStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    document.getElementById('sDot').style.background = d.configured ? 'var(--green)' : '#ff9800';
+    document.getElementById('sTxt').textContent = d.configured ? `Gemini ✓ · ${d.sources_count} chunks` : 'Falta API Key';
+  } catch {
+    document.getElementById('sDot').style.background = 'var(--red)';
+    document.getElementById('sTxt').textContent = 'Servidor apagado';
+  }
+}
+
+async function loadSources() {
+  try {
+    const r = await fetch('/api/sources');
+    const sources = await r.json();
+    document.getElementById('srcCount').textContent = `(${sources.length})`;
+    const list = document.getElementById('sourcesList');
+    if (!sources.length) {
+      list.innerHTML = '<span style="font-size:11px;color:var(--text-light);opacity:0.6;">Sin fuentes aún — agrega PDFs, URLs o texto</span>';
+      return;
+    }
+    const icons = {pdf:'📄', url:'🌐', text:'📝', image:'🖼️'};
+    list.innerHTML = sources.map(s => `
+      <div class="source-item">
+        <span class="source-name">${icons[s.type]||'📌'} ${s.name}</span>
+        <span class="source-meta">${s.chunks}f</span>
+        <button class="del-btn" onclick="deleteSource('${s.name.replace(/'/g,"\\'")}')">✕</button>
+      </div>`).join('');
+  } catch(e) { /* servidor apagado */ }
+}
+
+async function deleteSource(name) {
+  if (!confirm(`¿Eliminar fuente "${name}"?`)) return;
+  await fetch(`/api/sources/${encodeURIComponent(name)}`, {method:'DELETE'});
+  loadSources(); checkStatus();
+  toast(`🗑️ Fuente "${name}" eliminada`);
+}
+
+function setMode(m, btn) {
+  currentMode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('modeBadge').textContent = MODES[m];
+  document.getElementById('mHint').textContent = MODES[m];
+}
+
+function saveConvs() { localStorage.setItem('drpib_c', JSON.stringify(conversations)); }
+function getConv() {
+  if (!currentId) {
+    currentId = 'c'+Date.now();
+    conversations.unshift({id:currentId, title:'Nueva conversación', messages:[]});
+  }
+  return conversations.find(c => c.id === currentId);
+}
+function newChat() {
+  currentId = null;
+  document.getElementById('chatArea').innerHTML = document.querySelector('.welcome') ?
+    document.getElementById('chatArea').innerHTML : '<div class="welcome" id="ws"><div style="color:var(--text-light);text-align:center;padding:40px;">Nueva conversación iniciada.<br>¡Pregúntale al Dr. PIB!</div></div>';
+  renderHistory();
+}
+function loadConv(id) {
+  currentId = id;
+  const conv = conversations.find(c => c.id === id);
+  if (!conv) return;
+  const ca = document.getElementById('chatArea');
+  ca.innerHTML = '';
+  conv.messages.forEach(m => ca.appendChild(mkMsg(m.role, m.content, m.mode, m.srcs)));
+  scrollD(); renderHistory();
+}
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (!conversations.length) { list.innerHTML = '<div style="padding:12px 10px;font-size:11px;color:var(--text-light);opacity:0.6;text-align:center;">Sin conversaciones</div>'; return; }
+  list.innerHTML = conversations.map(c => `<div class="h-item ${c.id===currentId?'active':''}" onclick="loadConv('${c.id}')">💬 <span style="overflow:hidden;text-overflow:ellipsis;">${c.title}</span></div>`).join('');
+}
+
+function miniSVG() {
+  return `<svg class="mini-svg" viewBox="38 28 84 105" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="80" cy="75" rx="38" ry="42" fill="#e2b896"/>
+    <rect x="55" y="30" width="50" height="8" rx="2" fill="#0d1b2a"/>
+    <rect x="61" y="20" width="38" height="12" rx="2" fill="#1a2d42"/>
+    <rect x="53" y="64" width="23" height="16" rx="8" fill="none" stroke="#2d1f0e" stroke-width="2.5"/>
+    <rect x="84" y="64" width="23" height="16" rx="8" fill="none" stroke="#2d1f0e" stroke-width="2.5"/>
+    <line x1="76" y1="72" x2="84" y2="72" stroke="#2d1f0e" stroke-width="2"/>
+    <circle cx="65" cy="72" r="5" fill="#3d2b1a"/><circle cx="65" cy="72" r="2.5" fill="#1a0f00"/>
+    <circle cx="95" cy="72" r="5" fill="#3d2b1a"/><circle cx="95" cy="72" r="2.5" fill="#1a0f00"/>
+    <circle cx="66" cy="70" r="1.2" fill="white"/><circle cx="96" cy="70" r="1.2" fill="white"/>
+    <path d="M68,99 Q74,95 80,97 Q86,95 92,99" stroke="#2d1f0e" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+    <path d="M70 108 Q80 116 90 108" stroke="#8b4513" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function mkMsg(role, content, mode, srcs) {
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  const av = document.createElement('div');
+  av.className = `msg-avatar ${role}`;
+  av.innerHTML = role === 'bot' ? miniSVG() : '👤';
+  const mc = document.createElement('div');
+  mc.className = 'msg-content';
+  const bub = document.createElement('div');
+  bub.className = 'msg-bubble';
+  bub.innerHTML = fmt(content);
+  const meta = document.createElement('div');
+  meta.className = 'msg-meta';
+  const t = new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  meta.innerHTML = `<span>${role==='bot'?'Dr. PIB':'Tú'} · ${t}</span>
+    ${mode?`<span class="mpill mode-p">${MODES[mode]||mode}</span>`:''}
+    ${srcs>0?`<span class="mpill src-p">📚 ${srcs} fuentes</span>`:''}`;
+  mc.appendChild(bub); mc.appendChild(meta);
+  if (role==='bot'){div.appendChild(av);div.appendChild(mc);}
+  else{div.appendChild(mc);div.appendChild(av);}
+  return div;
+}
+
+function fmt(t) {
+  t = t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  t = t.replace(/\*(.*?)\*/g,'<em>$1</em>');
+  t = t.replace(/`([^`]+)`/g,'<code>$1</code>');
+  t = t.replace(/\n/g,'<br>');
+  t = t.replace(/\[Fuente:[^\]]+\]/g, m => `<code style="color:var(--green);font-size:11px;">${m}</code>`);
+  return t;
+}
+
+async function sendMsg() {
+  const inp = document.getElementById('chatInput');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = ''; aResize(inp); await doSend(txt);
+}
+async function sendSug(txt) {
+  const ws = document.getElementById('ws');
+  if (ws) ws.remove();
+  await doSend(txt);
+}
+
+async function doSend(text) {
+  const ws = document.getElementById('ws');
+  if (ws) ws.remove();
+  const ca = document.getElementById('chatArea');
+  const conv = getConv();
+  conv.messages.push({role:'user', content:text});
+  if (conv.title==='Nueva conversación') conv.title = text.slice(0,36)+'...';
+  saveConvs(); renderHistory();
+  ca.appendChild(mkMsg('user', text, null, 0)); scrollD();
+
+  const typing = document.createElement('div');
+  typing.className = 'message bot';
+  typing.innerHTML = `<div class="msg-avatar bot">${miniSVG()}</div><div class="msg-content"><div class="msg-bubble" style="background:var(--navy-light);border:1px solid rgba(201,168,76,0.1);"><div class="typing-dots"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div></div></div>`;
+  ca.appendChild(typing); scrollD();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:text, mode:currentMode, history:conv.messages.slice(-10)})
+    });
+    const d = await res.json();
+    typing.remove();
+    const reply = d.response || '❌ Sin respuesta';
+    const srcs = d.sources_used || 0;
+    conv.messages.push({role:'bot', content:reply, mode:currentMode, srcs});
+    saveConvs();
+    ca.appendChild(mkMsg('bot', reply, currentMode, srcs));
+    scrollD(); checkStatus();
+  } catch {
+    typing.remove();
+    ca.appendChild(mkMsg('bot', '❌ No pude conectar. ¿Está corriendo `python app.py` en VS Code?', null, 0));
+    scrollD();
+  }
+}
+
+/* MODAL */
+function openModal(tab) {
+  document.getElementById('srcModal').style.display = 'flex';
+  switchTab(tab, document.querySelector(`.mtab:nth-child(${['pdf','url','text','image'].indexOf(tab)+1})`));
+}
+function closeModal() { document.getElementById('srcModal').style.display = 'none'; }
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mtab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+async function uploadPDF(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const status = document.getElementById('pdfStatus');
+  status.innerHTML = '⏳ Procesando PDF...';
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/sources/pdf', {method:'POST', body:fd});
+    const d = await r.json();
+    if (d.ok) { status.innerHTML = `✅ ${d.message}`; loadSources(); toast(d.message); }
+    else status.innerHTML = `❌ ${d.error}`;
+  } catch { status.innerHTML = '❌ Error de conexión'; }
+}
+
+async function addURL() {
+  const url = document.getElementById('urlInput').value.trim();
+  const status = document.getElementById('urlStatus');
+  if (!url) { status.innerHTML = '❌ Escribe una URL primero'; return; }
+  status.innerHTML = '⏳ Descargando y procesando...';
+  try {
+    const r = await fetch('/api/sources/url', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url})});
+    const d = await r.json();
+    if (d.ok) { status.innerHTML = `✅ ${d.message}`; loadSources(); toast(d.message); }
+    else status.innerHTML = `❌ ${d.error}`;
+  } catch { status.innerHTML = '❌ Error de conexión'; }
+}
+
+async function addText() {
+  const text = document.getElementById('textContent').value.trim();
+  const label = document.getElementById('textLabel').value.trim() || 'Texto manual';
+  const status = document.getElementById('textStatus');
+  if (!text) { status.innerHTML = '❌ Pega algún texto primero'; return; }
+  status.innerHTML = '⏳ Indexando...';
+  try {
+    const r = await fetch('/api/sources/text', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text, label})});
+    const d = await r.json();
+    if (d.ok) { status.innerHTML = `✅ ${d.message}`; loadSources(); toast(d.message); }
+    else status.innerHTML = `❌ ${d.error}`;
+  } catch { status.innerHTML = '❌ Error de conexión'; }
+}
+
+async function uploadImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const status = document.getElementById('imgStatus');
+  status.innerHTML = '⏳ Procesando imagen con OCR...';
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/sources/image', {method:'POST', body:fd});
+    const d = await r.json();
+    if (d.ok) { status.innerHTML = `✅ ${d.message}`; loadSources(); toast(d.message); }
+    else status.innerHTML = `❌ ${d.error}`;
+  } catch { status.innerHTML = '❌ Error de conexión'; }
+}
+
+function hKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
+function aResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+function scrollD() { const ca=document.getElementById('chatArea'); setTimeout(()=>ca.scrollTop=ca.scrollHeight, 60); }
+function toast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:26px;right:26px;background:var(--navy-light);border:1px solid rgba(201,168,76,0.3);color:var(--cream);padding:12px 16px;border-radius:10px;font-size:12.5px;max-width:320px;z-index:9999;line-height:1.5;';
+  t.textContent = msg; document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},3500);
+}
+setInterval(checkStatus, 30000);
+</script>
+</body>
+</html>
