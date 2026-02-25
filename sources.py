@@ -15,7 +15,10 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 def get_db():
     if not SUPABASE_AVAILABLE or not SUPABASE_URL or not SUPABASE_KEY:
         return None
-    return create_client(SUPABASE_URL, SUPABASE_KEY)
+    try:
+        return create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception:
+        return None
 
 def make_id(text):
     return hashlib.md5(text[:200].encode()).hexdigest()[:12]
