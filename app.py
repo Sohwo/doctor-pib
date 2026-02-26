@@ -8,7 +8,7 @@
 import os
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import google.generativeai as genai
+from groq import Groq
 import json, os, datetime
 from sources import (
     load_sources, save_sources,
@@ -19,16 +19,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ─────────────────────────────────────
-#  🔑 PON TU API KEY DE GEMINI AQUÍ
+#  🔑 PON TU API KEY DE GROQ AQUÍ
 # ─────────────────────────────────────
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 # ─────────────────────────────────────
 
 app = Flask(__name__, static_folder="static")
 CORS(app)
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-2.0-flash")
+groq_client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
 
 HISTORY_FILE = "conversations.json"
 
@@ -142,25 +141,28 @@ def chat():
         system_prompt = build_system_prompt(mode, context)
 
         # Historial para Gemini
-        chat_history = []
-        for msg in history[-10:]:
-            role = "user" if msg["role"] == "user" else "model"
-            chat_history.append({"role": role, "parts": [msg["content"]]})
+    messages = [{"role": "system", "content": system_prompt}]
+    for msg in history[-10:]:
+        role = "user" if msg["role"] == "user" else "assistant"
+        messages.append({"role": role, "content": msg["content"]})
+    messages.append({"role": "user", "content": user_message})
 
-        chat_session = model.start_chat(history=chat_history)
-        full_message = f"{system_prompt}\n\nESTUDIANTE: {user_message}"
-        response = chat_session.send_message(full_message)
+    response = groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=messages,
+        temperature=0.5,
+        max_tokens=1200
+    )
 
-        return jsonify({
-            "response": response.text,
-            "mode": mode,
-            "sources_used": len(relevant),
-            "timestamp": datetime.datetime.now().isoformat()
-        })
+    return jsonify({
+        "response": response.choices[0].message.content,
+        "mode": mode,
+        "sources_used": len(relevant),
+        "timestamp": datetime.datetime.now().isoformat()
+    })
 
     except Exception as e:
         return jsonify({"response": f"❌ Error: {str(e)}"})
-
 
 # ══════════════════════════════════════
 #  RUTAS DE FUENTES (RAG)

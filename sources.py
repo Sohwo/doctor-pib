@@ -192,27 +192,16 @@ def ingest_text(text, label="Texto manual"):
         })
     return chunks
 
-def ingest_image(file_bytes, filename, gemini_model):
+def ingest_image(file_bytes, filename, gemini_model=None):
     import base64
-    img_b64 = base64.b64encode(file_bytes).decode()
-    ext = filename.lower().split(".")[-1]
-    mime_map = {"jpg":"image/jpeg","jpeg":"image/jpeg","png":"image/png","webp":"image/webp"}
-    mime_type = mime_map.get(ext, "image/jpeg")
-    prompt = "Extrae TODO el texto visible en esta imagen exactamente. Si hay fórmulas escríbelas legibles. Sin explicaciones, solo el texto."
-    response = gemini_model.generate_content([{"mime_type": mime_type, "data": img_b64}, prompt])
-    extracted_text = response.text
-    if len(extracted_text.strip()) < 30:
-        raise Exception("No pude extraer texto de la imagen.")
-    raw_chunks = chunk_text(extracted_text)
-    chunks = []
-    for i, chunk in enumerate(raw_chunks):
-        chunks.append({
-            "id": make_id(chunk),
-            "source_type": "image",
-            "source_name": filename,
-            "content": chunk,
-            "chunk_index": i,
-            "total_chunks": len(raw_chunks),
-            "added": datetime.datetime.now().isoformat()
-        })
+    # Groq no soporta imágenes directamente, guardamos referencia
+    chunks = [{
+        "id": make_id(filename + str(len(file_bytes))),
+        "source_type": "image",
+        "source_name": filename,
+        "content": f"Imagen escaneada: {filename}. Contenido pendiente de extracción manual.",
+        "chunk_index": 0,
+        "total_chunks": 1,
+        "added": datetime.datetime.now().isoformat()
+    }]
     return chunks
