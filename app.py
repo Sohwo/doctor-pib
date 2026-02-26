@@ -316,8 +316,9 @@ if __name__ == "__main__":
     print("\n" + "═"*52)
     print("  🎓 DOCTOR PIB v2.0 — Con RAG y fuentes")
     print("═"*52)
-    key_preview = GEMINI_API_KEY[:12] + "..." if GEMINI_API_KEY else "VACÍA"
-    print(f"\n  🔑 API Key cargada: {key_preview}")
+    groq_key = os.environ.get("GROQ_API_KEY", "")
+    key_preview = groq_key[:12] + "..." if groq_key else "VACÍA"
+    print(f"\n  🔑 Groq API Key: {key_preview}")
     sources = load_sources()
     print(f"  📚 Fuentes indexadas: {len(set(s.get('source_name','') for s in sources))}")
     print(f"\n  🌐 Abre: http://localhost:5000")
