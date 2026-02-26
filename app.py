@@ -21,7 +21,7 @@ load_dotenv()
 # ─────────────────────────────────────
 #  🔑 PON TU API KEY DE GROQ AQUÍ
 # ─────────────────────────────────────
-GROQ_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 # ─────────────────────────────────────
 
 app = Flask(__name__, static_folder="static")
@@ -141,25 +141,25 @@ def chat():
         system_prompt = build_system_prompt(mode, context)
 
         # Historial para Gemini
-    messages = [{"role": "system", "content": system_prompt}]
-    for msg in history[-10:]:
-        role = "user" if msg["role"] == "user" else "assistant"
-        messages.append({"role": role, "content": msg["content"]})
-    messages.append({"role": "user", "content": user_message})
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in history[-10:]:
+            role = "user" if msg["role"] == "user" else "assistant"
+            messages.append({"role": role, "content": msg["content"]})
+        messages.append({"role": "user", "content": user_message})
 
-    response = groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=messages,
-        temperature=0.5,
-        max_tokens=1200
-    )
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=0.5,
+            max_tokens=1200
+        )
 
-    return jsonify({
-        "response": response.choices[0].message.content,
-        "mode": mode,
-        "sources_used": len(relevant),
-        "timestamp": datetime.datetime.now().isoformat()
-    })
+        return jsonify({
+            "response": response.choices[0].message.content,
+            "mode": mode,
+            "sources_used": len(relevant),
+            "timestamp": datetime.datetime.now().isoformat()
+        })
 
     except Exception as e:
         return jsonify({"response": f"❌ Error: {str(e)}"})
