@@ -109,7 +109,7 @@ def index():
 
 @app.route("/api/status")
 def status():
-    configured = GEMINI_API_KEY != "PEGA_TU_API_KEY_AQUI"
+    configured = bool(os.environ.get("GROQ_API_KEY", ""))
     sources = load_sources()
     return jsonify({
         "configured": configured,
@@ -129,8 +129,8 @@ def chat():
     if not user_message:
         return jsonify({"error": "Mensaje vacío"}), 400
 
-    if GEMINI_API_KEY == "PEGA_TU_API_KEY_AQUI":
-        return jsonify({"response": "⚠️ Configura tu API Key en app.py primero, cuate. Línea 22."})
+    if not os.environ.get("GROQ_API_KEY", ""):
+        return jsonify({"response": "⚠️ Configura tu GROQ_API_KEY en Render, cuate."})
 
     try:
         # RAG: buscar en fuentes
